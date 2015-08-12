@@ -1,7 +1,9 @@
 package com.res.wiki;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Set;
@@ -28,35 +30,60 @@ public class InnerLinks implements Conf {
 	private static final String PAGE_NOT_EXIST = "does not have an article";
 
 	private static final int CAP_LIMIT = 10;
-	private static final int SPECIAL_ALL_PAGES_CAP_LIMIT = 50;
+	private static final int SPECIAL_ALL_PAGES_CAP_LIMIT = 7000;
 	
 	private static Set<String> wikiLinks = new TreeSet<String>();
 
-	private static String wikiBaseUrl = "https://en.wikipedia.org";
-	private static String wikiAllLinks = "wiki_all_links.csv";
-	private static String specialStartingPage = "/w/index.php?title=Special:AllPages&from=\"Big\"+Minh";
+	private static String WIKI_BASE_URL = "https://en.wikipedia.org";
+	private static String WIKI_SPECIAL_PAGE_LINKS_FILE = "wiki_special_page_links.csv";
+	private static String WIKI_ALL_INNER_LINKS_FILE = "wiki_all_inner_links.csv";
+	private static String WIKI_SPECIAL_PAGE_LINKS_SOURCE_FILE = "special_page_links.txt";
+	private static String WIKI_INNER_LINKS_FILE = "wiki_inner_links.csv";
+	private static String WIKI_SPECIAL_STARTING_PAGE = "/w/index.php?title=Special:AllPages&from=South+African+pigeon+grass";
 	
 	private static int counter = 0;
 	private static int specialAllPagescounter = 1;
-	public static void main(String[] args) throws InterruptedException, IOException{
+	public static void main(String[] args) throws Exception{
 		
-		//writeAllLinks();
+		//writeAllSpecialPages();
+		
+		readSpecialPageLinkFile(new File(FOLDER_LOCATION+WIKI_SPECIAL_PAGE_LINKS_SOURCE_FILE));
 		
 		//storeAllPages();
 		
-		storeDeadLinks("/wiki/Kew_Rule");
+		//storeDeadLinks("/w/index.php?title=Special:AllPages&from=%22FF.SS.%22+-+Cio%C3%A8%3A+%22...che+mi+hai+portato+a+fare+sopra+a+Posillipo+se+non+mi+vuoi+pi%C3%B9+bene%3F%22");
 				
 		System.out.println("DONE!");
 	}
 	
 	// https://en.wikipedia.org/wiki/Special:AllPages
-	private static void writeAllLinks() throws InterruptedException, IOException{		
+	@SuppressWarnings("unused")
+	private static void writeAllSpecialPages() throws InterruptedException, IOException{		
 		
-		FileWriter fWriter = new FileWriter(new File(FOLDER_LOCATION+wikiAllLinks).getAbsoluteFile());
+		FileWriter fWriter = new FileWriter(new File(FOLDER_LOCATION+WIKI_SPECIAL_PAGE_LINKS_FILE).getAbsoluteFile());
 		BufferedWriter bWriter = new BufferedWriter(fWriter);
 		
 		try{
-			getSpecialAllPages(specialStartingPage, bWriter);
+			getSpecialAllPages(WIKI_SPECIAL_STARTING_PAGE, bWriter);
+		}catch(HttpStatusException e){
+			//e.printStackTrace();
+			System.out.println("Some error occurred : "+e.getMessage());
+		}
+		
+		if (bWriter != null) bWriter.close();
+	    if (fWriter != null) fWriter.close();
+	}
+	
+	@SuppressWarnings("unused")
+	private static void writeAllInnerLinksFromSpecialPages(String fullUrl) throws InterruptedException, IOException{
+		
+		
+		
+		FileWriter fWriter = new FileWriter(new File(FOLDER_LOCATION+WIKI_INNER_LINKS_FILE).getAbsoluteFile());
+		BufferedWriter bWriter = new BufferedWriter(fWriter);
+		
+		try{
+			getInnerLinksFromSpecialPage(fullUrl, bWriter);
 		}catch(HttpStatusException e){
 			//e.printStackTrace();
 			System.out.println("Some error occurred : "+e.getMessage());
@@ -74,16 +101,36 @@ public class InnerLinks implements Conf {
 		
 		specialAllPagescounter++;
 		
-		Document doc = Jsoup.connect(wikiBaseUrl+url).timeout(TIMEOUT).userAgent(BROWSER_AGENT).get();
+		Document doc = Jsoup.connect(WIKI_BASE_URL+url).timeout(TIMEOUT).userAgent(BROWSER_AGENT).get();
 		for (Element link : doc.select("td.mw-allpages-nav a")) {
 			if(link.ownText().startsWith("Next page")){
 				System.out.println("["+specialAllPagescounter+"]"+link.attr("href"));
 				
-				bWriter.write(wikiBaseUrl+link.attr("href"));	
+				bWriter.write(WIKI_BASE_URL+link.attr("href"));	
 				bWriter.newLine();
 				
 				getSpecialAllPages(link.attr("href"), bWriter);
 			}
+        }
+	}
+	
+	static int innerLinkCounter = 0;
+	private static void getInnerLinksFromSpecialPage(String url, BufferedWriter bWriter) throws InterruptedException, IOException{
+		String fullUrl = url; 
+		Document doc = Jsoup.connect(fullUrl).timeout(TIMEOUT).userAgent(BROWSER_AGENT).get();
+				
+		//System.out.println(fullUrl);
+		
+		for (Element link : doc.select("ul.mw-allpages-chunk li a")) {
+			
+			innerLinkCounter++;
+			
+			String fullLink = WIKI_REG_LOCAITON + link.attr("href"); 
+			
+			System.out.println("["+innerLinkCounter+"] " + fullLink);
+			
+			bWriter.write(fullLink);	
+			bWriter.newLine();
         }
 	}
 	
@@ -246,5 +293,23 @@ public class InnerLinks implements Conf {
         	System.err.println("Error while reading web file "+e.getMessage());
             //e.printStackTrace();
         }
+	}
+	
+	private static void readSpecialPageLinkFile(File file) throws Exception{
+		
+		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+			
+			FileWriter fWriter = new FileWriter(new File(FOLDER_LOCATION+WIKI_ALL_INNER_LINKS_FILE).getAbsoluteFile());
+			BufferedWriter bWriter = new BufferedWriter(fWriter);
+			
+		    for(String line; (line = br.readLine()) != null; ) {
+		    	//System.out.println(i+" ==> "+line);
+		    	
+		    	getInnerLinksFromSpecialPage(line, bWriter);
+		    }
+		    
+		    if (bWriter != null) bWriter.close();
+		    if (fWriter != null) fWriter.close();
+		}
 	}
 }
