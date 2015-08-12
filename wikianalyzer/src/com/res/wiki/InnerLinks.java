@@ -328,7 +328,9 @@ public class InnerLinks implements Conf {
 		    for(String line; (line = br.readLine()) != null; ) {
 		    	//System.out.println(i+" ==> "+line);
 		    	int deadLinkCount = DeadLinks.getDeadLinks(line);
-		    	System.out.println(line+"|"+deadLinkCount);		    	
+		    	System.out.println(line+" ==> "+deadLinkCount);
+		    	bWriter.write(line+"|"+deadLinkCount);
+		    	bWriter.newLine();
 		    }
 		    
 		    if (bWriter != null) bWriter.close();
