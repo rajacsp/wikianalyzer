@@ -67,7 +67,7 @@ public class DeadLinks {
 			}
         } catch (Exception e) {
         	System.err.println("Error while reading web file "+e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 		
 		return counter;
@@ -104,7 +104,7 @@ public class DeadLinks {
 			}
         } catch (Exception e) {
         	System.err.println("Error while reading web file "+e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 		
 		return externalLinks;
@@ -196,7 +196,7 @@ public class DeadLinks {
             
         } catch (Exception e) {
         	System.err.println("Error while reading web file "+e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 	}
 	
@@ -232,7 +232,7 @@ public class DeadLinks {
         	return false;
         } catch (Exception e) {
         	System.err.println("Error while reading web file "+e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
             return false;
         }
 		

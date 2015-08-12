@@ -37,7 +37,9 @@ public class InnerLinks implements Conf {
 	private static String WIKI_BASE_URL = "https://en.wikipedia.org";
 	private static String WIKI_SPECIAL_PAGE_LINKS_FILE = "wiki_special_page_links.csv";
 	private static String WIKI_ALL_INNER_LINKS_FILE = "wiki_all_inner_links.csv";
-	private static String WIKI_SPECIAL_PAGE_LINKS_SOURCE_FILE = "special_page_links.txt";
+	private static String WIKI_ALL_INNER_LINKS_SOURCE_FILE = "wiki_all_inner_links1.txt";
+	private static String WIKI_DEAD_LINKS_DESTINATION_FILE = "wiki_dead_links.csv";
+	//private static String WIKI_SPECIAL_PAGE_LINKS_SOURCE_FILE = "special_page_links.txt";
 	private static String WIKI_INNER_LINKS_FILE = "wiki_inner_links.csv";
 	private static String WIKI_SPECIAL_STARTING_PAGE = "/w/index.php?title=Special:AllPages&from=South+African+pigeon+grass";
 	
@@ -47,7 +49,9 @@ public class InnerLinks implements Conf {
 		
 		//writeAllSpecialPages();
 		
-		readSpecialPageLinkFile(new File(FOLDER_LOCATION+WIKI_SPECIAL_PAGE_LINKS_SOURCE_FILE));
+		//readSpecialPageLinkFile(new File(FOLDER_LOCATION+WIKI_SPECIAL_PAGE_LINKS_SOURCE_FILE));
+		
+		getAllDeadLinks(new File(FOLDER_LOCATION+WIKI_ALL_INNER_LINKS_SOURCE_FILE), new File(FOLDER_LOCATION+WIKI_DEAD_LINKS_DESTINATION_FILE));
 		
 		//storeAllPages();
 		
@@ -213,7 +217,7 @@ public class InnerLinks implements Conf {
 						
 						wikiLinks.add(fullUrl);
 						
-						//int deadLinks = DeadLinks.getDeadLinks(fullUrl);
+						int deadLinks = DeadLinks.getDeadLinks(fullUrl);
 						//int deadLinks = 0;
 						
 						DeadLinks.writeExteralLinksIntoFile(fullUrl, bWriter);
@@ -295,6 +299,7 @@ public class InnerLinks implements Conf {
         }
 	}
 	
+	@SuppressWarnings("unused")
 	private static void readSpecialPageLinkFile(File file) throws Exception{
 		
 		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -306,6 +311,24 @@ public class InnerLinks implements Conf {
 		    	//System.out.println(i+" ==> "+line);
 		    	
 		    	getInnerLinksFromSpecialPage(line, bWriter);
+		    }
+		    
+		    if (bWriter != null) bWriter.close();
+		    if (fWriter != null) fWriter.close();
+		}
+	}
+	
+	private static void getAllDeadLinks(File srcFile, File destFile) throws Exception{
+		
+		try(BufferedReader br = new BufferedReader(new FileReader(srcFile))) {
+			
+			FileWriter fWriter = new FileWriter(destFile.getAbsoluteFile());
+			BufferedWriter bWriter = new BufferedWriter(fWriter);
+			
+		    for(String line; (line = br.readLine()) != null; ) {
+		    	//System.out.println(i+" ==> "+line);
+		    	int deadLinkCount = DeadLinks.getDeadLinks(line);
+		    	System.out.println(line+"|"+deadLinkCount);		    	
 		    }
 		    
 		    if (bWriter != null) bWriter.close();
